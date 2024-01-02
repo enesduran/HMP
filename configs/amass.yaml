@@ -1,0 +1,11 @@
+dataset_dir: ./data/amass/generative
+data:
+    fps: 30
+    clip_length: 128
+    gender: neutral
+    up: z
+
+canonical: False
+unified_orientation: True
+single_motion: False
+normalize: True

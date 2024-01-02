@@ -1,0 +1,29 @@
+numba==0.58.1
+# numpy==1.25.0
+smplx==0.1.28
+kornia==0.7.0
+mediapipe==0.10.1
+
+configer @ git+https://github.com/nghorbani/configer@8cd1e3e556d9697298907800a743e120be57ac36
+human-body-prior @ git+https://github.com/nghorbani/human_body_prior@4c246d8a83ce16d3cff9c79dcf04d81fa440a6bc
+pytorch3d @ git+https://github.com/facebookresearch/pytorch3d.git@2f11ddc5ee7d6bd56f2fb6744a16776fab6536f7
+
+scikit-image
+joblib 
+matplotlib
+einops
+open3d
+ffmpeg-python
+tabulate
+scenepic
+yacs
+boto3
+ipdb
+loguru
+matplotlib
+opencv-python
+plyfile
+torchgeometry
+tensorboardX
+pandas
+trimesh 

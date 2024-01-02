@@ -1,0 +1,64 @@
+is_train: False
+multi_gpu: False
+save_dir: ./outputs/fitting
+out: ./outputs/fitting
+amass_data: True
+bvh_viz: False
+
+nemf:
+    siren: False
+    skip_connection: True
+    norm_layer: True
+    bandwidth: 7
+    hidden_neuron: 1024
+    local_z: 1024
+    global_z: 256
+    local_output: 144
+    global_output: 6
+
+data:
+    fps: 30
+    clip_length: 256
+    gender: neutral
+    up: z
+    root_transform: True
+    normalize: ['pos', 'velocity', 'global_xform', 'angular', 'height', 'root_orient', 'root_vel']
+
+data_path: ./data/rgb_demo/raw_frames/pymaf_example
+data_type: RGB
+
+smplx: ./bodymodels/SMPLX_NEUTRAL.npz
+mano_right: ./bodymodels/MANO_RIGHT.pkl
+mano_left: ./bodymodels/MANO_LEFT.pkl
+init_motion_prior: ./checkpoints/init_state_prior_gmm
+hmp: ./train/checkpoints/best_model.pth
+input_video_path: ./data/rgb_demo/raw_frames/pymaf_example.mp4
+hposer: ./bodymodels/hposer
+use_finger_tips: True
+
+batch_size: 1
+
+robust_loss: bisquare
+robust_tuning_const: 4.6851
+joint2d_sigma: 100
+
+joint2d_weight: 0.001 0.001 0.001
+pose_prior_weight: 0.04 0.04 0.0
+shape_prior_weight: 0.05 0.05 0.05
+
+joint3d-smooth-weight: 100.0 100.0 0.0
+motion_prior_weight: 0.0 0.0 0.075
+init_motion_prior_weight: 0.0 0.0 0.00
+
+joint_consistency_weight: 0.0 0.0 100.0
+bone_length_weight: 0.0 0.0 2000.0
+lr: 1.0
+num_iters: 30 80 20
+
+stage3_tune_init_num_frames: 15
+stage3_tune_init_freeze_start: 30
+stage3_tune_init_freeze_end: 55
+
+save_results: True
+save_stages_results: True
+

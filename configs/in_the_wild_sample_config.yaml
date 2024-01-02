@@ -1,0 +1,144 @@
+batch_size: 1
+bvh_viz: false
+
+data:
+  clip_length: 128
+  fps: 30
+  gender: neutral
+  normalize:
+  - pos
+  - velocity
+  - global_xform
+  - angular
+  - height
+  - root_orient
+  - root_vel
+  root_transform: true
+  up: z
+
+dataset_dir: ./data/amass/generative
+dtw_loss: true
+geodesic_loss: true
+
+global_prior:
+  activation: tanh
+  in_channels: 6
+  kernel_size: 4
+  temporal_scale: 8
+  z_dim: 256
+
+initialization: true
+is_train: false
+keypoint_source: mmpose
+
+l1_loss: true
+lambda_angle: 1
+lambda_dtw: 0.5
+lambda_kl: 0.0001
+
+local_prior:
+  activation: tanh
+  channel_base: 15
+  extra_conv: 0
+  kernel_size: 4
+  num_layers: 4
+  padding_mode: reflect
+  skeleton_dist: 2
+  skeleton_pool: mean
+  temporal_scale: 8
+  upsampling: linear
+  use_residual_blocks: true
+  z_dim: 1024
+
+log: false
+multi_gpu: false
+
+nemf:
+  bandwidth: 7
+  global_output: 6
+  global_z: 256
+  hidden_neuron: 1024
+  local_output: 144
+  local_z: 1024
+  norm_layer: true
+  siren: false
+  skip_connection: true
+nsubject: 1
+num_workers: 0
+opt_betas: false
+output_trans: false
+overlap_len: 16
+pretrained_gmp: false
+save_dir: ./outputs/generative
+
+scheduler:
+  gamma: 0.7
+  step_size: 200
+
+stg1:
+  betas_prior: 10
+  keypoint_source: mmpose
+  lambda_batch_cs: 0
+  lambda_init_z_prior: 0
+  lambda_j3d_smooth: 0
+  lambda_motion_prior: 0
+  lambda_pose_prior: 0
+  lambda_orient: 0
+  lambda_orient_smooth: 1
+  lambda_pos: 0
+  lambda_reproj: 0.05
+  lambda_rot: 0
+  lambda_rot_smooth: 0
+  lambda_trans: 10
+  lambda_trans_smooth: 10
+  lr: 0.05
+  niters: 400
+  opt_params:
+  - betas
+  - trans
+  - root_orient
+  
+stg2:
+  betas_prior: 10
+  keypoint_source: mmpose
+  lambda_batch_cs: 0
+  lambda_init_z_prior: 0
+  lambda_j3d_smooth: 0
+  lambda_motion_prior: 200
+  lambda_pose_prior: 0
+  lambda_orient: 0
+  lambda_orient_smooth: 1
+  lambda_pos: 0
+  lambda_reproj: 0.05
+  lambda_rot: 0
+  lambda_rot_smooth: 0
+  lambda_trans: 10
+  lambda_trans_smooth: 10
+  lr: 0.05
+  niters: 400
+  opt_params:
+  - betas
+  - trans
+  - root_orient
+  - z_l
+
+stg3:
+  betas_prior: 0
+  lambda_batch_cs: 0
+  lambda_init_z_prior: 0
+  lambda_j3d_smooth: 0
+  lambda_motion_prior: 0
+  lambda_orient: 0
+  lambda_orient_smooth: 0
+  lambda_pos: 0
+  lambda_reproj: 0
+  lambda_rot: 0
+  lambda_rot_smooth: 0
+  lambda_trans: 0
+  lambda_trans_smooth: 0
+  lr: 0.0
+  niters: 0
+  opt_params:
+  - root_orient
+  - z_l
+verbose: false

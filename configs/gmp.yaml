@@ -1,0 +1,45 @@
+multi_gpu: True
+verbose: True
+
+is_train: True
+log: True
+
+epoch_begin: 0
+epoch_num: 1000
+checkpoint: 100
+
+batch_size: 16
+num_workers: 0
+
+dataset_dir: ./data/amass/gmp
+save_dir: ./outputs/gmp
+
+learning_rate: 0.0001
+weight_decay: 0.0001
+l1_loss: True
+lambda_v: 1
+lambda_up: 1
+lambda_trans: 1
+lambda_contacts: 0.5
+
+data:
+    fps: 30
+    clip_length: 128
+    gender: male
+    up: z
+    normalize: ['pos', 'velocity', 'rot6d', 'angular']
+
+global_motion:
+    activation: relu
+    channel_base: 15 # 3(pos) + 3(vel) + 6(rot) + 3(ang)
+    out_channels: 12 # 3 + 1 + 8
+    use_residual_blocks: True
+    kernel_size: 15
+    num_layers: 3
+    skeleton_dist: 1
+    extra_conv: 0
+    padding_mode: reflect
+    skeleton_pool: mean
+
+scheduler:
+    name:

@@ -1,0 +1,43 @@
+multi_gpu: False
+verbose: True
+
+is_train: True
+log: True
+
+epoch_begin: 0
+iterations: 500
+
+amass_data: True
+dataset_dir: ./data/amass/single
+save_dir: ./outputs/basic
+bvh_viz: False
+
+learning_rate: 0.0001
+geodesic_loss: True
+l1_loss: True
+lambda_rotmat: 1
+lambda_pos: 10
+lambda_orient: 1
+lambda_v: 1
+lambda_up: 1
+lambda_trans: 1
+
+data:
+    fps: 30
+    up: z
+    gender: male
+    root_transform: True
+
+nemf:
+    siren: False
+    skip_connection: True
+    norm_layer: True
+    bandwidth: 7
+    hidden_neuron: 1024
+    local_z: 0
+    global_z: 0
+    local_output: 106 # 16 x 6 + 6 + 4
+    global_output: 1
+
+scheduler:
+    name:

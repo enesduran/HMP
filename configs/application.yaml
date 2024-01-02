@@ -1,0 +1,75 @@
+multi_gpu: False
+verbose: False
+
+is_train: False
+log: False
+
+iterations: 600
+
+batch_size: 1
+num_workers: 0
+
+dataset_dir: ./data/amass/generative
+save_dir: ./outputs/generative
+bvh_viz: False
+
+output_trans: False
+pretrained_gmp: False # gmp.yaml
+
+initialization: True
+learning_rate: 0.1
+geodesic_loss: True
+l1_loss: True
+lambda_rot: 1
+lambda_pos: 10
+lambda_orient: 1
+lambda_trans: 1
+dtw_loss: True
+lambda_dtw: 0.5
+lambda_angle: 1
+
+lambda_kl: 0.0001
+
+data:
+    fps: 30
+    clip_length: 128
+    gender: neutral
+    up: z
+    root_transform: True
+    normalize: ['pos', 'velocity', 'global_xform', 'angular', 'root_orient', 'root_vel']
+
+local_prior:
+    activation: tanh
+    channel_base: 15 # 3(pos) + 3(vel) + 6(rot) + 3(ang)
+    use_residual_blocks: True
+    z_dim: 1024
+    temporal_scale: 8
+    kernel_size: 4
+    num_layers: 4
+    skeleton_dist: 2
+    extra_conv: 0
+    padding_mode: reflect
+    skeleton_pool: mean
+    upsampling: linear
+
+global_prior:
+    activation: tanh
+    in_channels: 6
+    kernel_size: 4
+    temporal_scale: 8
+    z_dim: 256
+
+nemf:
+    siren: False
+    skip_connection: True
+    norm_layer: True
+    bandwidth: 7
+    hidden_neuron: 1024
+    local_z: 1024
+    global_z: 256
+    local_output: 144
+    global_output: 6
+
+scheduler:
+    step_size: 200
+    gamma: 0.7
