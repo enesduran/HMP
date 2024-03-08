@@ -29,9 +29,10 @@ hmp_path="./outputs/generative/results"
 bm_path="./data/body_models"
 pymafx_path="./external/PyMAF-X/data"
 mmpose_path="./data/mmpose_models"
+mean_std_path='./data/amass/generative'
 
 # create paths for data
-mkdir -p $hmp_path $bm_path $pymafx_path $mmpose_path
+mkdir -p $hmp_path $bm_path $pymafx_path $mmpose_path $mean_std_path
 
 echo "Downloading Body Models, PyMAF-X, and HMP"
 python src/scripts/download_all.py 
@@ -47,10 +48,10 @@ curl -L -o "$mmpose_path/res50_onehand10k_256x256-e67998f6_20200813.pth" "$keypo
 unzip -o "downloads/body_models.zip" -d $bm_path
 unzip -o "downloads/data.zip" -d $pymafx_path
 unzip -o "downloads/model.zip" -d $hmp_path
+mv './outputs/generative/results/mean-neutral-128-30fps.pt'  './data/amass/generative/mean-neutral-128-30fps.pt'  
+mv './outputs/generative/results/std-neutral-128-30fps.pt'  './data/amass/generative/std-neutral-128-30fps.pt'  
+
 
 echo "DONE!"
-
-
-
 
  
