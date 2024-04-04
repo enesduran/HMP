@@ -179,6 +179,7 @@ motion_recon/
 logs/
 optim*/
 evaluate*/
+notes
  
 
 !data/.gitkeep
