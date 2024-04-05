@@ -126,7 +126,7 @@ class MMPOSEJson:
                                         pred_instance.scores > self.bbox_thr)]
             bboxes = bboxes[nms(bboxes, self.nms_thr), :4]
 
-        else:
+        else: 
             bboxes = gt_bbox[None, :4]
  
         # predict keypoints
@@ -168,12 +168,13 @@ class MMPOSEJson:
         is_itw = len(gt_dict["frame_id"]) == 0
         DIST_THR = 100
 
-        
-        if len(glob.glob(os.path.join(os.path.dirname(video_path), "rgb/*.jpg"))) > 0:
-            frame_names = sorted(glob.glob(os.path.join(os.path.dirname(video_path), "rgb/*.jpg"))) 
+        vid_prefix = 'rgb_pseudo_right' if video_path.endswith('rgb_pseudo_raw.mp4') else 'rgb'
+         
+        if len(glob.glob(os.path.join(os.path.dirname(video_path), f"{vid_prefix}/*.jpg"))) > 0:
+            frame_names = sorted(glob.glob(os.path.join(os.path.dirname(video_path), f"{vid_prefix}/*.jpg"))) 
             suffix = ".jpg"
-        elif len(glob.glob(os.path.join(os.path.dirname(video_path), "rgb/*.png"))) > 0:
-            frame_names = sorted(glob.glob(os.path.join(os.path.dirname(video_path), "rgb/*.png")))
+        elif len(glob.glob(os.path.join(os.path.dirname(video_path), f"{vid_prefix}/*.png"))) > 0:
+            frame_names = sorted(glob.glob(os.path.join(os.path.dirname(video_path), f"{vid_prefix}/*.png")))
             suffix = ".png"
 
         for frame_idx, frame_name in tqdm(enumerate(frame_names)): 
@@ -187,6 +188,7 @@ class MMPOSEJson:
                 # and frame_idx not in gt_dict["frame_id"]:
                 if frame_idx not in gt_dict["frame_id"]:
                     bad_flag = True
+                    gt_bbox = None 
                 else:
                     real_idx = gt_dict["frame_id"].index(frame_idx)
                     gt_bbox = gt_dict["bbox"][real_idx]

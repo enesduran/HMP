@@ -17,7 +17,11 @@ def detect_mp_(img, bbox):
         crop_img = img.copy()[max(int(bbox[1]), 0):min(int(bbox[3]), img.shape[0]), 
                             max(int(bbox[0]), 0):min(int(bbox[2]), img.shape[1])]
         
+        if (crop_img.shape[0] * crop_img.shape[1]) == 0:
+            return None, None, None
+ 
         results = hands.process(cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB))
+   
         if results.multi_hand_landmarks is None:
             return None, None, None
         else: 
@@ -506,6 +510,7 @@ class MPJson:
     def detect_mp_std(self, img_dir, out_dir, json_out_dir=None, video_out=False):
     
         os.makedirs(out_dir, exist_ok=True)
+        os.makedirs(os.path.join(os.path.dirname(out_dir), 'confidences'), exist_ok=True)
         
         # The joint order is the same as openpose but the skeleton is different
         IMAGE_FILES = sorted([os.path.join(img_dir, x) for x in os.listdir(img_dir) if x.endswith('.png') or x.endswith('.jpg')])
@@ -611,11 +616,11 @@ class MPJson:
                                 
                                 bbox = [np.min(orient_bbox[:, 0]), np.min(orient_bbox[:, 1]), 
                                 np.max(orient_bbox[:, 0]), np.max(orient_bbox[:, 1])]
-
+          
                                 img_t = cv2.warpAffine(image_raw.copy(), rot_mat, (image_raw.shape[1], image_raw.shape[0]))
-                                
+                                 
                                 _, j2d_full_img, hand_conf = detect_mp_(img_t, bbox)
-                
+                                
                                 if j2d_full_img is None:
                                     views.append(img_t)
                                     if self.verbose:
@@ -682,7 +687,7 @@ class MPJson:
                 cv2.imwrite(fname_single_view, self.annotated_image)
                 
                 # write keypoints with std 
-            
+             
             np.savez(os.path.join(os.path.dirname(out_dir), 'confidences/mediapipe_std.npz'), **std_dict)
 
             if video_out:
@@ -816,9 +821,7 @@ class MPJson:
                                 confidence = max(results.multi_handedness[0].classification[0].score, results.multi_handedness[1].classification[0].score)
                             else:   
                                 confidence = results.multi_handedness[0].classification[0].score
-                                
-                                # import ipdb; ipdb.set_trace()
-
+                            
                                 if results.multi_handedness[0].classification[0].label != handedness_extend[img_idx]:
                                 
                                     if self.verbose: 
