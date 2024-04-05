@@ -91,10 +91,11 @@ class Inference(Dataset):
                     # bbox = [min(kp2d_valid[:, 0]), min(kp2d_valid[:, 1]), max(kp2d_valid[:, 0]), max(kp2d_valid[:, 1])]
     
                     bb_with_conf = wb_kps["bbox"][i*5:(i+1)*5]
+                    
                     bbox_mmpose = bb_with_conf[:4]
-                                   
+                    
                     center = [(bbox_mmpose[2] + bbox_mmpose[0]) / 2., (bbox_mmpose[3] + bbox_mmpose[1]) / 2.]
-                 
+                                     
                     scale = self.scale_factor * 1.2 * max(bbox_mmpose[2] - bbox_mmpose[0], bbox_mmpose[3] - bbox_mmpose[1]) / 200.
 
                     res = [constants.IMG_RES, constants.IMG_RES]
@@ -178,13 +179,10 @@ class Inference(Dataset):
         return kp
 
     def __getitem__(self, idx):
-        if self.pre_load_imgs is not None:
-            img = self.pre_load_imgs
-        else:
-            # img = cv2.cvtColor(cv2.imread(self.image_file_names[idx]), cv2.COLOR_BGR2RGB)
-            idx_real = idx
-            img_orig = cv2.imread(self.image_file_names[idx_real])[:,:,::-1].copy().astype(np.float32)
-            orig_height, orig_width = img_orig.shape[:2]      
+
+        idx_real = idx
+        img_orig = cv2.imread(self.image_file_names[idx_real])[:,:,::-1].copy().astype(np.float32)
+        orig_height, orig_width = img_orig.shape[:2]      
             
         if not self.full_body:
             bbox = self.bboxes[idx]
@@ -201,11 +199,9 @@ class Inference(Dataset):
             item['img_rhand'] = self.normalize_img(torch.tensor(norm_img).float())
             item['orig_height'] = orig_height
             item['orig_width'] = orig_width
- 
-            if self.has_keypoints:
-                return item # , kp_2d
-            else:
-                return norm_img
+  
+            return item
+        
         else:
             item = {}
 
@@ -214,12 +210,12 @@ class Inference(Dataset):
             flip = 0
 
             j2d = self.joints2d[idx]
-           
+                       
             kp2d_valid = j2d[j2d[:, 2]>0.]
 
             bbox = [min(kp2d_valid[:, 0]), min(kp2d_valid[:, 1]),
                     max(kp2d_valid[:, 0]), max(kp2d_valid[:, 1])]
-            
+                        
             center = [(bbox[2] + bbox[0]) / 2., (bbox[3] + bbox[1]) / 2.]
             sc = 1.2 * max(bbox[2] - bbox[0], bbox[3] - bbox[1]) / 200.
 

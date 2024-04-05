@@ -139,7 +139,7 @@ def run_demo(args):
     args.pin_memory = True if torch.cuda.is_available() else False
 
     gt_bbox_all = read_gt_bbox()
-
+    
     # hand detection 
     pp_det_file_path = os.path.join(output_path, 'pp_det_results.pkl')
 
@@ -186,7 +186,7 @@ def run_demo(args):
                     # check entries in bbox_i, height or width may be 0. There are some cases 
                     # e.g. './data/rgb_data/DexYCB/20200820-subject-03/20200820_142158/932122060861/rgb_gt'
                     if bbox_delta_x > 0 and bbox_delta_y > 0:
-                        bbox_i = np.concatenate((gt_bbox_t, [1]))
+                        bbox_i = gt_bbox_t
                     else:
                         continue
 
@@ -211,7 +211,7 @@ def run_demo(args):
         pkle.dump(tracking_results, open(pp_det_file_path, 'wb'))
 
     bbox_scale = 1.0
-    
+ 
     # ========= Define model ========= #
     model = pymaf_net(path_config.SMPL_MEAN_PARAMS, is_train=False).to(device)
 
@@ -316,7 +316,8 @@ def run_demo(args):
 
         bboxes = gt_bbox_all["bbox"]
         joints2d = gt_bbox_all["bbox"]
-        wb_kps["bbox"] = bboxes.reshape(-1)
+        # wb_kps["bbox"] = bboxes.reshape(-1)
+        
         # if there is no bbox detection 
         if len(gt_bbox_all["bbox"]) ==0:
             pred_results = {'pred_cam': None,
@@ -352,40 +353,23 @@ def run_demo(args):
             return 
 
         else:
-            if args.pre_load_imgs:
-                dataset = Inference(image_folder=image_folder,
-                                    frames=frames,
-                                    bboxes=bboxes,
-                                    joints2d=joints2d,
-                                    scale=bbox_scale,
-                                    pre_load_imgs=pre_load_imgs[frames],
-                                    full_body=True,
-                                    person_ids=person_id_list,
-                                    wb_kps=wb_kps)
-            else:
-                
-                #################################
-                # for in-the-wild videos 
-                if len(joints2d.shape) != 1:
-                    if joints2d.shape[1] == 5:
-                        joints2d_ = np.zeros((joints2d.shape[0], 2, 3))
-                    
-                        joints2d_[:, 0, :2] = joints2d[:, :2] 
-                        joints2d_[:, 1, :2] = joints2d[:, 2:4] 
-                        joints2d_[:, 0, -1] = joints2d[:, -1]
-                        joints2d_[:, 1, -1] = joints2d[:, -1]
-                        joints2d = joints2d_
-                ##########################################
- 
 
-                dataset = Inference(image_folder=image_folder,
-                                    frames=frames,
-                                    bboxes=bboxes,
-                                    joints2d=joints2d,
-                                    scale=bbox_scale,
-                                    full_body=True,   
-                                    person_ids=person_id_list,
-                                    wb_kps=wb_kps)
+            joints2d_ = np.zeros((joints2d.shape[0], 2, 3))
+        
+            joints2d_[:, 0, :2] = joints2d[:, :2] 
+            joints2d_[:, 1, :2] = joints2d[:, 2:4] 
+            joints2d_[:, 0, -1] = joints2d[:, -1]
+            joints2d_[:, 1, -1] = joints2d[:, -1]
+            joints2d = joints2d_
+ 
+            dataset = Inference(image_folder=image_folder,
+                                frames=frames,
+                                bboxes=bboxes,
+                                joints2d=joints2d,
+                                scale=bbox_scale,
+                                full_body=True,   
+                                person_ids=person_id_list,
+                                wb_kps=wb_kps)
 
         bboxes = dataset.bboxes
         scales = dataset.scales
