@@ -584,36 +584,7 @@ def obtain_keypoints(gt_values, keypoint_blend_weight):
         mmpose_flag = True
     else:
         raise ValueError("Invalid keypoint source")
-    
-    # check if mmpose keypoints are already there and full. If not, run mmpose.
-    cond_mmpose = (not os.path.exists(mmpose_keypoints2d_path)) or  \
-                    (args.N_frames != len(glob.glob(mmpose_keypoints2d_path + "/*.json")))
      
-
-    
-    # Notice that for any case independent of the dataset we need bounding boxes through mmpose.
-    if cond_mmpose:
-        MMPOSEJson().main(video_path=os.path.join(os.path.dirname(args.vid_path), "rgb_raw.mp4"), 
-                                                    out_folder_path=mmpose_vid_out_path, 
-                                                    json_folder=mmpose_keypoints2d_path, 
-                                                    gt_dict=gt_values)
-
-    # put mmpose bbox instead of gt in itw setting. Gt frames are the bbox detected frames for itw setting.
-    if args.dataname == "in_the_wild":
-        bbox_pickles = sorted(glob.glob(mmpose_keypoints2d_path + "/*.pkl"))
-        gt_values["bbox"] = []
-        
-        for i, mmpose_bbox_path in enumerate(bbox_pickles):
-            bbox_temp = joblib.load(mmpose_bbox_path)
-            
-            
-
-            if not np.equal(bbox_temp, np.array([0, 0, gt_values["width"], gt_values["height"], 0.0])).all():
-                gt_values["bbox"].append(bbox_temp)
-                gt_values["frame_id"].append(i)
-            else:
-                pass 
-
     if pymafx_flag:
         if not os.path.exists(pymafx_keypoints2d_path):     
             export_pymafx_json(fpath=init_out_obj["video_path"], jts_2d=init_out_obj["pymafx_joints2d"])
@@ -626,7 +597,7 @@ def obtain_keypoints(gt_values, keypoint_blend_weight):
         if not os.path.exists(mediapipe_multiview_keypoints2d_path) or (args.N_frames != len(glob.glob(mediapipe_multiview_keypoints2d_path + "/*.json"))):         
             MPJson(gt_dict=gt_values, expand_coef=1.4).detect_mp_multiview(img_dir=args.vid_path, out_dir=mediapipe_muliview_vid_out_path, 
                                     json_out_dir=mediapipe_multiview_keypoints2d_path, video_out=True)
-            
+
     if mediapipe_flag:
         if not os.path.exists(mediapipe_keypoints2d_path) or (args.N_frames != len(glob.glob(mediapipe_keypoints2d_path + "/*.json"))): 
             MPJson(gt_dict=gt_values, expand_coef=1.4).detect_mp(img_dir=args.vid_path, out_dir=mediapipe_vid_out_path, 
@@ -636,7 +607,7 @@ def obtain_keypoints(gt_values, keypoint_blend_weight):
     if mediapipe_std_flag and (not os.path.exists(mediapipe_std_keypoints2d_path) or (args.N_frames != len(glob.glob(mediapipe_std_keypoints2d_path + "/*.json")))):
         MPJson(gt_dict=gt_values, expand_coef=1.4).detect_mp_std(img_dir=args.vid_path, out_dir=mediapipe_std_vid_out_path,
                     json_out_dir=mediapipe_std_keypoints2d_path, video_out=False)
-    
+   
 
     if blend_flag or blend_std_flag:
         # create blend keypoints if not already done. joints2d_source may either be blend or blend_smooth
@@ -660,7 +631,7 @@ def obtain_keypoints(gt_values, keypoint_blend_weight):
             blend_keypoints(source_path1=source1_path, source_path2=source2_path, raw_img_path=args.vid_path, gt_frames=gt_values["frame_id"],
                     target_path=joints2d_source, blend_ratio=keypoint_blend_weight, blend_vid_out_path=joints2d_vid_out_path,
                     smooth_flag=smooth_flag, render=True) 
-
+    
     return 
     
 
@@ -681,7 +652,7 @@ def get_vid_out_path(keypoint_source, weight=1.0):
     return vid_out_path
 
 
-def multi_stage_opt(config_f, exp_setup_name, init_method_name):
+def multi_stage_opt(config_f, data_name, init_method_name):
     
     logger.info(f"Running reconstruction for {args.vid_path}")
     
@@ -689,10 +660,8 @@ def multi_stage_opt(config_f, exp_setup_name, init_method_name):
     config_type = '.'.join(config_type)
     
     keypoint_blend_weight = 1.0
-    vid_path = args.vid_path
     abs_video_path = os.path.join(os.getcwd(), args.vid_path)
  
-    args.dataname = args.vid_path.split("/")[3]
     args.N_frames = len(glob.glob(os.path.join(abs_video_path, "*.jpg")))
     
     if args.N_frames == 0:
@@ -700,29 +669,28 @@ def multi_stage_opt(config_f, exp_setup_name, init_method_name):
     
     args.hand_model = BodyModel(model_type="mano", model_path=MANO_RH_DIR, device='cuda', 
                            **{"flat_hand_mean":True, "use_pca":False, "batch_size":args.N_frames, "is_rhand":True})
-    gt_path, subjectname = get_gt_path(exp_setup_name)
-    
+    gt_path, subjectname = get_gt_path(data_name)
+     
     assert args.keypoint_source in POSSIBLE_KEYP_SOURCES, "Please specify a valid keypoint source"
  
     # either pymafx or metro 
-    init_method_jts_vid_out_name = os.path.join(os.getcwd(), os.path.dirname(vid_path), f"rgb_{init_method_name}.mp4")
-    init_method_out_path = os.path.join(os.path.dirname(vid_path), f"{init_method_name}_out")
+    init_method_jts_vid_out_name = os.path.join(os.getcwd(), os.path.dirname(args.vid_path), f"rgb_{init_method_name}.mp4")
+    init_method_out_path = os.path.join(os.path.dirname(args.vid_path), f"{init_method_name}_out")
     init_method_raw_res_path = os.path.join(init_method_out_path, f"{init_method_name}_raw_res.npz") 
     init_method_slerp_res_path = os.path.join(init_method_out_path, f"{init_method_name}_slerp_res.npz") 
     init_method_slerp_res_bbox_path = os.path.join(init_method_out_path, f"{init_method_name}_slerp_res_bbox.npz")
-    init_method_vid_out_path = os.path.join(os.path.dirname(vid_path), f"rgb_{init_method_name}")
-        
-    
-    mediapipe_bbox_conf_path = os.path.join(os.path.dirname(vid_path), "confidences", "mediapipe_bbox_conf.npz")
-    
+    init_method_vid_out_path = os.path.join(os.path.dirname(args.vid_path), f"rgb_{init_method_name}")
+         
+    mediapipe_bbox_conf_path = os.path.join(os.path.dirname(args.vid_path), "confidences", "mediapipe_bbox_conf.npz")
+      
     gt_values = eval(f"get_{args.dataname.lower()}_gt")(gt_path, render=False)    
-    gt_values["exp_setup_name"] = exp_setup_name                   # this will be used in quant evaluation 
-    seqname = eval(f"get_seqname_{args.dataname.lower()}")(vid_path)
+    gt_values["exp_setup_name"] = data_name                               # this will be used in quant evaluation 
+    seqname = eval(f"get_seqname_{args.dataname.lower()}")(args.vid_path)
     
     gt_frame_id = gt_values["frame_id"]  # empty list if not available    
     
     if len(gt_frame_id) == 0 and args.dataname != "in_the_wild":
-        logger.info(f"No ground truth frame detected, skipping pymafx & optimization, {vid_path}")
+        logger.info(f"No ground truth frame detected, skipping pymafx & optimization, {args.vid_path}")
         return 
      
     try:
@@ -734,31 +702,66 @@ def multi_stage_opt(config_f, exp_setup_name, init_method_name):
     
     gt_values["width"] = width
     gt_values["height"] = height
+    gt_values["source"] = data_name
 
     # input reflected view in case of left hand. 
-    vid_path = vid_path if gt_values["handedness"] == "right" else os.path.join(os.path.dirname(vid_path), "rgb_pseudo_right") 
+    args.vid_path = args.vid_path if gt_values["handedness"] == "right" else os.path.join(os.path.dirname(args.vid_path), "rgb_pseudo_right") 
     cam_center = torch.tensor([[height / 2, width / 2]])   
     
-    mmpose_keypoints2d_path = os.path.join(os.path.dirname(vid_path), "mmpose_keypoints2d")
- 
-    # dont change ordering, we first need to have keypoints. 
-    obtain_keypoints(gt_values, keypoint_blend_weight)  
- 
-    joints2d_source = eval(args.keypoint_source + "_keypoints2d_path")
-    joints2d_vid_out_path = eval(args.keypoint_source + "_vid_out_path")
+
+    # put mmpose bbox instead of gt in itw setting. Gt frames are the bbox detected frames for itw setting.
+    mmpose_keypoints2d_path = os.path.join(os.path.dirname(args.vid_path), "mmpose_keypoints2d")
     
-    global init_out_obj
+    # check if mmpose keypoints are already there and full. If not, run mmpose.
+    cond_mmpose = (not os.path.exists(mmpose_keypoints2d_path)) or  \
+                    (args.N_frames != len(glob.glob(mmpose_keypoints2d_path + "/*.json")))
+       
+    # Notice that for any case independent of the dataset we need bounding boxes through mmpose.
+    if cond_mmpose:        
+        vid_p = os.path.join(os.path.dirname(args.vid_path), "rgb_raw.mp4")
+        
+        if "handedness" in  gt_values.keys():
+            if gt_values["handedness"] == 'left':
+                vid_p = os.path.join(os.path.dirname(args.vid_path), "rgb_pseudo_raw.mp4")    
+         
+        MMPOSEJson().main(video_path=vid_p, out_folder_path=get_vid_out_path('mmpose'), 
+                            json_folder=mmpose_keypoints2d_path, 
+                            gt_dict=gt_values)
+
+    if args.dataname == "in_the_wild":
+        bbox_pickles = sorted(glob.glob(mmpose_keypoints2d_path + "/*.pkl"))
+        gt_values["bbox"] = []
+        
+        for i, mmpose_bbox_path in enumerate(bbox_pickles):
+            bbox_temp = joblib.load(mmpose_bbox_path)
+        
+            if not np.equal(bbox_temp, np.array([0, 0, gt_values["width"], gt_values["height"], 0.0])).all():
+                gt_values["bbox"].append(bbox_temp)
+                gt_values["frame_id"].append(i)
+            else:
+                pass 
+
+     
+    global init_out_obj; init_out_obj = dict()
+  
     # take initialization from either PyMaF-X or MeTro
     init_out_obj = eval(f"run_{init_method_name}")(args.vid_path, init_method_out_path, 
                                     joints2d_image_path=init_method_vid_out_path, 
                                     jts_vid=init_method_jts_vid_out_name,
                                     gt_bbox=gt_values)
- 
+    init_out_obj["video_path"] = args.vid_path
+  
+    # dont change ordering, we first need to have keypoints. 
+    obtain_keypoints(gt_values, keypoint_blend_weight)  
+
+
+    joints2d_source = eval(args.keypoint_source + "_keypoints2d_path")
+    joints2d_vid_out_path = eval(args.keypoint_source + "_vid_out_path")
+     
     # invoke the initial estimate method     
     if not os.path.exists(mediapipe_bbox_conf_path):
         MPJson(gt_dict=gt_values, expand_coef=1.4).mp_bbox_conf(img_dir=args.vid_path, out_dir=mediapipe_bbox_conf_path)
-
-     
+ 
     mediapipe_bbox_conf = torch.tensor(np.load(mediapipe_bbox_conf_path)['arr_0']) 
 
     # If the config setting is not raw, then we perform slerp. We need raw settings for comparison. 
@@ -904,15 +907,19 @@ def multi_stage_opt(config_f, exp_setup_name, init_method_name):
     open3d_viz_flag, scenepic_viz_flag = True, False 
     pymafx_pred_path = args.save_path.replace(config_type, "_pymafx_raw")
     gt_npz_filepath = f"{pymafx_pred_path}/recon_000_30fps.npz"
+    
     # vis_vid_name = vid_path  
     vis_vid_name = joints2d_vid_out_path
+
+
       
     # visualize the results
     if open3d_viz_flag:
         print("Visualizing optimization results") 
         open3d_viz_overlay.vis_opt_results(pred_file_path=f"{args.save_path}/recon_000_30fps.npz", 
                                  gt_file_path=gt_npz_filepath, 
-                                  img_dir=vis_vid_name)
+                                  img_dir=vis_vid_name,
+                                  flip_flag = gt_values["handedness"] == "left")
     if scenepic_viz_flag: 
         scenepic_viz.vis_opt_results(pred_file_path=f"{args.save_path}/recon_000_30fps.npz", 
                                  gt_file_path=gt_npz_filepath, 
@@ -1390,7 +1397,7 @@ def run_opt(opt):
 
     fk = ForwardKinematicsLayer(args)
      
-    multi_stage_opt(os.path.join('./configs', opt.config), opt.exp_name, init_method)
+    multi_stage_opt(os.path.join('./configs', opt.config), opt.dataname, init_method)
     
 def main(exp_name, vid_path, config, save_path=None, misc={}):
 
@@ -1418,16 +1425,17 @@ if __name__ == '__main__':
     
     # python src/fitting_app.py --vid-path ./data/rgb_data/in_the_wild/cand_20/rgb --config in_the_wild_sample_config.yaml
     if "HO3D_v3" in opt.vid_path:    
-        opt.exp_name = "HO3D_v3"
+        opt.dataname = "HO3D_v3"
     elif "DexYCB" in opt.vid_path:
-        opt.exp_name = "DexYCB"
+        opt.dataname = "DexYCB"
     else:
-        opt.exp_name = "in_the_wild"
-    
+        opt.dataname = "in_the_wild"
+         
+    args.dataname = opt.dataname
     cfg_name = opt.config.split(".")[0]
     opt.use_hposer = False
     
-    args.save_path = opt.save_path = os.path.join("./optim", cfg_name, opt.exp_name, opt.vid_path.split("/")[-2])   
+    args.save_path = opt.save_path = os.path.join("./optim", cfg_name, opt.dataname, opt.vid_path.split("/")[-2])   
     args.plot_loss = True
     
     if os.path.splitext(opt.vid_path)[-1] == ".mp4":
@@ -1438,17 +1446,17 @@ if __name__ == '__main__':
         
         # create a folder and save the frames there
         os.makedirs(rgb_frames_path, exist_ok=True)
-        
-        vid_frame_num = int(ffmpeg.probe(opt.vid_path, v='error')['streams'][0]['nb_frames'])
+
+        # vid_frame_num = int(ffmpeg.probe(opt.vid_path, v='error')['streams'][0]['nb_frames'])
+        subprocess.run(f"ffmpeg -y -i {opt.vid_path} {rgb_frames_path}/%06d.jpg -r 30 ", shell=True)
  
         # do this if it has not been already converted. 
-        if len(glob.glob(f"{rgb_frames_path}/*.jpg")) != vid_frame_num: 
+        # if len(glob.glob(f"{rgb_frames_path}/*.jpg")) != vid_frame_num: 
             # convert to jpg rgb frames with 30 fps
-            pass 
-            # subprocess.run(f"ffmpeg -y -i {opt.vid_path} {rgb_frames_path}/%06d.jpg -r 30 ", shell=True)
+            # pass 
 
         # refer to raw images folder
         opt.vid_path = rgb_frames_path
- 
+
     args.vid_path = opt.vid_path
     run_opt(opt)

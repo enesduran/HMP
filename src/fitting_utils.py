@@ -41,8 +41,7 @@ def convert_pred_to_full_img_cam(pare_cam, bbox_height, bbox_center,
     cy = 2 * (bbox_center[:, 1] - (img_h / 2.)) / (s * bbox_height)
 
     kk = 1.0
-
-    # fantezi 
+ 
     tx_final = (tx + cx) / kk
     ty_final = (ty + cy) / kk
     tz_final = tz / kk
@@ -345,15 +344,7 @@ def run_metro(video_p, out_path, joints2d_image_path=None, jts_vid=None, gt_bbox
         external.v2a_code.scripts.fit_mano_to_metro.main(video_p)
     
     out_obj = joblib.load(pickle_path)
-    out_obj["video_path"] = video_p
-    
-    # full image dir    
-    # yp = os.path.join(os.path.dirname(video_p), "metro_out/open3d_img/*.jpg") 
-    # make video out of the images in the directory video_p
-    # os.system(f"/usr/bin/ffmpeg -framerate 30 -y -pattern_type glob -i {yp} {os.path.join(out_path, 'video.mp4')}")
-        
-    # create keypoints from it. 
-
+   
     return out_obj 
 
 
@@ -375,7 +366,6 @@ def run_pymafx(video_p, pymaf_out_path, joints2d_image_path=None, jts_vid=None, 
         rel_vid_p = os.path.join("../..", video_p)
         rel_out_p = os.path.join("../..", pymaf_out_path)
          
-        
         command_list = ["python", "-m", "apps.demo_mano", "--image_folder", rel_vid_p, "--detection_threshold", "0.3",
         "--misc", "MODEL.PyMAF.OPT_HEAD", "False", "TRAIN.BHF_MODE", "hand_only", "MODEL.MESH_MODEL", "mano",
         "--output_folder", rel_out_p, "--pretrained_model", "./data/pretrained_model/PyMAF-X_model_checkpoint_v1.1.pt", 
@@ -390,11 +380,15 @@ def run_pymafx(video_p, pymaf_out_path, joints2d_image_path=None, jts_vid=None, 
 
         command_str = " ".join(command_list)
        
-        os.system(command_str)
+        try: 
+            os.system(command_str)
+        except:
+            exit("PyMAF-X failed")
+            
+        
         os.chdir(cur_path)
 
     out_obj = joblib.load(pickle_path)
-    out_obj["video_path"] = video_p
     out_obj["cam_f"] = np.array([5000, 5000])
     return out_obj 
 

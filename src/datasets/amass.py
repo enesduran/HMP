@@ -144,6 +144,11 @@ def reflect_gt(gt_dict):
             else:
                 bbox_real_i[0] = img_width - bbox_real_i[0]
                 bbox_real_i[2] = img_width - bbox_real_i[2]
+                
+                # arrange again 
+                if bbox_real_i[0] > bbox_real_i[2]:
+                    bbox_real_i[0], bbox_real_i[2] = bbox_real_i[2], bbox_real_i[0] 
+                
                 reflected_bbox.append(bbox_real_i)
                         
         # write image 
@@ -155,6 +160,10 @@ def reflect_gt(gt_dict):
     gt_dict["path"] = pseudo_right_path
     gt_dict["trans"] = reflected_trans
     gt_dict["poses"] = reflected_pose
+    
+    pseudo_vid_path = os.path.join(os.path.dirname(pseudo_right_path), "rgb_pseudo_raw.mp4")
+    os.system(f"/usr/bin/ffmpeg -y -framerate 30 -pattern_type glob -i '{pseudo_right_path}/*.jpg' -vcodec libx264 -pix_fmt yuv420p {pseudo_vid_path}")
+    
      
 def render_gt(rgb_img_list, gt_dict, rgb_images_path, circle_rad=2, line_width=2):
     
@@ -293,7 +302,7 @@ def get_dexycb_gt(rgb_images_path, render=True):
             at_least_one_gt = True
             
             # format is [x, y, x2, y2]
-            bbox_i = np.array([x_min, y_min, x_max, y_max])           
+            bbox_i = np.array([x_min, y_min, x_max, y_max, 1.0])           
             
             assert gt_file_i["joint_2d"].shape == (1, 21, 2), "Something is wrong with the number of joints"
             assert gt_file_i["joint_3d"].shape == (1, 21, 3), "Something is wrong with the number of joints"
@@ -324,11 +333,12 @@ def get_dexycb_gt(rgb_images_path, render=True):
         gt_dict["vertices_3d"] = vert3d.cpu().numpy()
 
     rgb_img_list = sorted(glob.glob(os.path.join(gt_dict["path"], "color_*.jpg")))
+
     
     # plot gt joints. if no gt is available for this frame, then implicitly skip it 
     if render and at_least_one_gt:       
         render_gt(rgb_img_list, gt_dict, rgb_images_path, circle_rad=2, line_width=2)        
-
+    
     return gt_dict
 
 def get_in_the_wild_gt(gt_path, render=False):
@@ -389,7 +399,7 @@ def get_arctic_data_gt(gt_path, render=False):
                                 EXPAND_COEF=1.2)
     gt_dict["bbox"] = np.concatenate([gt_dict["bbox"],
                                     np.ones_like(min_x)[..., None]], axis=1)
-
+    
     return gt_dict
     
 def get_ho3d_v3_gt(gt_path, render=False):
@@ -529,6 +539,8 @@ def get_ho3d_v3_gt(gt_path, render=False):
     if not len(glob.glob(os.path.join(gt_kyp_pathname, "*_keypoints.json"))) == bs and split_type == "train":
         write_gt_kyp(gt_kyp_pathname, gt_dict["joints_2d"], valid_frames=gt_dict["frame_id"])
     
+    gt_dict["bbox"] = np.array(gt_dict["bbox"])
+ 
     return gt_dict
 
 def get_stage2_res(npz_init_dict, joints2d_path=None):
