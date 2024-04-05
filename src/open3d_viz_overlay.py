@@ -210,7 +210,8 @@ class Open3DRenderer():
         bg_color=(1., 1., 1., 1.),
         debug_n_frames=1,
         view_type='camera', #'world',  
-        trails=False):
+        trails=False,
+        flip_flag=False):
         
         MANO_RIGHT_MODEL_DIR = "./data/body_models/mano/MANO_RIGHT.pkl"
         self.mano_right = MANO(MANO_RIGHT_MODEL_DIR, is_rhand=True, flat_hand_mean=True, use_pca=False)
@@ -245,6 +246,8 @@ class Open3DRenderer():
         self.enable_antialiasing = enable_antialiasing
         self.enable_post_processing = enable_post_processing
         self.enable_ambient_occlusion = enable_ambient_occlusion
+
+        self.flip_flag = flip_flag
         
         
     def init_scene(self):
@@ -505,8 +508,9 @@ class Open3DRenderer():
                             method=method[i],
                             white_background=white_background)
             
-            vid_paths.append(video_path_inp)
-   
+            vid_paths.append(video_path_inp) 
+
+        flip_command = '-vf hflip' if self.flip_flag else ''
 
         if len(vid_paths) == 2:
             # call ffmpeg to create video 
@@ -521,9 +525,9 @@ class Open3DRenderer():
                     [0v][1v][2v]hstack=inputs=3[outv]' \
                     -map '[outv]' {video_path} -y"
         
-        else:
+        else:             
             # convert to video without any filtering. For MeTro visualization
-            cmd = f"/usr/bin/ffmpeg -pattern_type glob -y -i '{frame_dir}/*.jpg' {video_path}"
+            cmd = f"/usr/bin/ffmpeg -pattern_type glob -y -i '{frame_dir}/*.jpg' {flip_command} {video_path}"
 
         subprocess.run(cmd, shell=True)
      
@@ -634,7 +638,7 @@ def load_res(res_path):
 
 
 def vis_opt_results(pred_file_path, gt_file_path, img_dir, post_process_flag=False, 
-                    img_quality=1, trails=False, white_background=False, fps=30, view_type="video"):
+                    img_quality=1, trails=False, white_background=False, fps=30, flip_flag=False):
      
     if pred_file_path.endswith(".pkl"):
         frame_size = joblib.load(pred_file_path)["joints"].shape[0]
@@ -678,7 +682,8 @@ def vis_opt_results(pred_file_path, gt_file_path, img_dir, post_process_flag=Fal
         img_quality=img_quality,
         bg_color=(1., 1., 1., 1.),
         debug_n_frames=1,    
-        trails=trails)
+        trails=trails,
+        flip_flag=flip_flag)
     
     renderer.create_animation(smpl_seqs, video_path=video_fname, img_dir=img_dir, fps=fps, method=methods, white_background=white_background)
     
